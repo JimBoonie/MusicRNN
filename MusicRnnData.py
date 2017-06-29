@@ -33,18 +33,28 @@ class MusicRnnData(object):
         
         return normed_audio, sample_rate
     
-    def extract_segment(audio, n_x, n_y):
+    def extract_segment(audio, n_x, n_y, start_idx=-1):
         n_samples = audio.shape[0]
         n_points = n_x + n_y
         
-        #   select random index from range(0, n_samples - n_points)
-        start_idx = np.random.randint(0, n_samples - n_points, 1)
+        if start_idx==-1:
+            #   select random index from range(0, n_samples - n_points)
+            start_idx = np.random.randint(0, n_samples - n_points, 1)
         
         # extract segment
         x = audio[start_idx:start_idx+n_x]
         y = audio[start_idx+n_x:start_idx+n_x+n_y]
         return x, y
         
-    def data_batch(self, n_x, n_y, n_segments):
+    def data_batch(self, n_x, n_y, batch_size):
         n_tracks = len(self.tracks)
-        return n_tracks
+        idxs = np.random.randint(0, n_tracks, batch_size)
+        
+        x_batch = []
+        y_batch = []
+        for idx in idxs:
+            x_i, y_i = self.extract_segment(self.tracks[idx], n_x, n_y)
+            x_batch.append(x_i)
+            y_batch.append(y_i)
+        
+        return x_batch, y_batch
