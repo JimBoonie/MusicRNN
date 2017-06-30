@@ -12,11 +12,11 @@ class MusicRnnData(object):
     def __init__(self, track_list, bitrate=16, twos_comp=True):
         self.tracks = []
         for track in track_list:
-            audio, sample_rate = self.load_audio_from_wav(track)
+            audio, sample_rate = self.__load_audio_from_wav(track)
             self.tracks.append(audio)
         self.sample_rate = sample_rate
     
-    def load_audio_from_wav(filename, bitrate=16, twos_comp=True):
+    def __load_audio_from_wav(self, filename, bitrate=16, twos_comp=True):
         # read audio
         sample_rate, audio = wavfile.read(filename)
         assert(audio.dtype=='int16') # assume audio is int16 for now
@@ -33,13 +33,13 @@ class MusicRnnData(object):
         
         return normed_audio, sample_rate
     
-    def extract_segment(audio, n_x, n_y, start_idx=-1):
+    def __extract_segment(self, audio, n_x, n_y, start_idx=-1):
         n_samples = audio.shape[0]
         n_points = n_x + n_y
         
         if start_idx==-1:
             #   select random index from range(0, n_samples - n_points)
-            start_idx = np.random.randint(0, n_samples - n_points, 1)
+            start_idx = np.random.randint(0, n_samples - n_points, 1)[0]
         
         # extract segment
         x = audio[start_idx:start_idx+n_x]
@@ -50,11 +50,12 @@ class MusicRnnData(object):
         n_tracks = len(self.tracks)
         idxs = np.random.randint(0, n_tracks, batch_size)
         
-        x_batch = []
-        y_batch = []
-        for idx in idxs:
-            x_i, y_i = self.extract_segment(self.tracks[idx], n_x, n_y)
-            x_batch.append(x_i)
-            y_batch.append(y_i)
+        x_batch = np.zeros((batch_size, n_x))
+        y_batch = np.zeros((batch_size, n_y))
+        for i in range(batch_size):
+            idx = idxs[i]
+            x_i, y_i = self.__extract_segment(self.tracks[idx], n_x, n_y)
+            x_batch[idx, :] = x_i
+            y_batch[idx, :] = y_i
         
         return x_batch, y_batch
