@@ -11,12 +11,14 @@ from scipy.io import wavfile
 class MusicRnnData(object):
     def __init__(self, track_list, bitrate=16, twos_comp=True):
         self.tracks = []
+        self.bitrate = bitrate
+        self.twos_comp = twos_comp
         for track in track_list:
             audio, sample_rate = self.__load_audio_from_wav(track)
             self.tracks.append(audio)
         self.sample_rate = sample_rate
     
-    def __load_audio_from_wav(self, filename, bitrate=16, twos_comp=True):
+    def __load_audio_from_wav(self, filename):
         # read audio
         sample_rate, audio = wavfile.read(filename)
         assert(audio.dtype=='int16') # assume audio is int16 for now
@@ -28,9 +30,9 @@ class MusicRnnData(object):
             audio = np.mean(audio, 1)
         
         # normalize to [-1, 1]
-        max_code = 2**bitrate
+        max_code = 2**self.bitrate
         norm_factor = max_code/2.0
-        offset = (not twos_comp)*max_code
+        offset = (not self.twos_comp)*max_code
         normed_audio = (audio - offset)/norm_factor
         
         return normed_audio, sample_rate
@@ -61,3 +63,9 @@ class MusicRnnData(object):
             y_batch[idx, :] = y_i
         
         return x_batch, y_batch
+        
+    def convert_to_wav(self, audio):
+        norm_factor = 2**self.bitrate/2.0
+        offset = (not self.twos_comp*1.0)
+        scaled_audio = (audio + offset)*norm_factor
+        return scaled_audio
