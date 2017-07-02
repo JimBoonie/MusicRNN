@@ -23,7 +23,9 @@ class MusicRnnData(object):
         assert(sample_rate==44100) # assume sample_rate is 44100 for now
 
         # combine channels
-        audio = np.mean(np.array(audio), 1)
+        audio = np.array(audio)
+        if len(audio.shape) > 1:
+            audio = np.mean(audio, 1)
         
         # normalize to [-1, 1]
         max_code = 2**bitrate
