@@ -46,7 +46,7 @@ class MusicRnnData(object):
         y = audio[start_idx+n_x:start_idx+n_x+n_y]
         return x, y
         
-    def data_batch(self, n_x, n_y, batch_size):
+    def batch(self, n_x, n_y, batch_size):
         n_tracks = len(self.tracks)
         idxs = np.random.randint(0, n_tracks, batch_size)
         
