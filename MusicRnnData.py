@@ -59,13 +59,13 @@ class MusicRnnData(object):
         for i in range(batch_size):
             idx = idxs[i]
             x_i, y_i = self.__extract_segment(self.tracks[idx], n_x, n_y)
-            x_batch[idx, :] = x_i
-            y_batch[idx, :] = y_i
+            x_batch[i, :] = x_i
+            y_batch[i, :] = y_i
         
         return x_batch, y_batch
         
     def convert_to_wav(self, audio):
         norm_factor = 2**self.bitrate/2.0
-        offset = (not self.twos_comp*1.0)
+        offset = (not self.twos_comp)*1.0
         scaled_audio = (audio + offset)*norm_factor
         return scaled_audio
