@@ -8,9 +8,13 @@ Created on Wed Jun 28 21:25:25 2017
 import numpy as np
 from scipy.io import wavfile
 
-class MusicRnnData(object):
-    def __init__(self, track_list, bitrate=16, twos_comp=True):
+from torch.utils.data import Dataset
+
+class MusicData(Dataset):
+    def __init__(self, track_list, x_len, y_len, bitrate=16, twos_comp=True):
         self.tracks = []
+        self.x_len = x_len
+        self.y_len = y_len
         self.bitrate = bitrate
         self.twos_comp = twos_comp
         for track in track_list:
@@ -37,11 +41,11 @@ class MusicRnnData(object):
         
         return normed_audio, sample_rate
     
-    def __extract_segment(self, audio, n_x, n_y, start_idx=-1):
+    def __extract_segment(self, audio, n_x, n_y, start_idx=None):
         n_samples = audio.shape[0]
         n_points = n_x + n_y
         
-        if start_idx==-1:
+        if start_idx is None:
             #   select random index from range(0, n_samples - n_points)
             start_idx = np.random.randint(0, n_samples - n_points, 1)[0]
         
@@ -50,19 +54,11 @@ class MusicRnnData(object):
         y = audio[start_idx+n_x:start_idx+n_x+n_y]
         return x, y
         
-    def batch(self, n_x, n_y, batch_size):
-        n_tracks = len(self.tracks)
-        idxs = np.random.randint(0, n_tracks, batch_size)
+    def __len__(self):
+        return len(self.tracks)
         
-        x_batch = np.zeros((batch_size, n_x))
-        y_batch = np.zeros((batch_size, n_y))
-        for i in range(batch_size):
-            idx = idxs[i]
-            x_i, y_i = self.__extract_segment(self.tracks[idx], n_x, n_y)
-            x_batch[i, :] = x_i
-            y_batch[i, :] = y_i
-        
-        return x_batch, y_batch
+    def __getitem__(self, idx):
+        return self.__extract_segment(self.tracks[idx], self.x_len, self.y_len)
         
     def convert_to_wav(self, audio):
         norm_factor = 2**self.bitrate/2.0
