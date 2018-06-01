@@ -8,18 +8,21 @@ Created on Wed Jun 28 21:25:25 2017
 import numpy as np
 from scipy.io import wavfile
 
+import torch
 from torch.utils.data import Dataset
 
 class MusicData(Dataset):
     def __init__(self, track_list, x_len, y_len, bitrate=16, twos_comp=True):
-        self.tracks = []
+        self.data = []
         self.x_len = x_len
         self.y_len = y_len
         self.bitrate = bitrate
         self.twos_comp = twos_comp
         for track in track_list:
             audio, sample_rate = self.__load_audio_from_wav(track)
-            self.tracks.append(audio)
+            for i in range(0, len(audio) - x_len - y_len, x_len + y_len):
+                x, y = self.__extract_segment(audio, x_len, y_len, start_idx=i)
+                self.data.append({'x': x, 'y': y})
         self.sample_rate = sample_rate
     
     def __load_audio_from_wav(self, filename):
@@ -55,10 +58,13 @@ class MusicData(Dataset):
         return x, y
         
     def __len__(self):
-        return len(self.tracks)
+        return len(self.data)
         
     def __getitem__(self, idx):
-        return self.__extract_segment(self.tracks[idx], self.x_len, self.y_len)
+        #return self.__extract_segment(self.tracks[idx], self.x_len, self.y_len)
+        x = torch.tensor(self.data[idx]['x'], dtype=torch.float32)
+        y = torch.tensor(self.data[idx]['y'], dtype=torch.float32)
+        return (x, y)
         
     def convert_to_wav(self, audio):
         norm_factor = 2**self.bitrate/2.0
